@@ -12,11 +12,54 @@ DATA_SIZES=(1 4 16 32 64 128 256 512 1024)
 function main () {
     rm -rf increasing_numthreads compare_distances increasing_numchannels
 
+    simple_experiment
     dto_exp_increasing_numthreads
     dto_exp_increasing_numchannels
     dto_exp_compare_local_remote
 
     restore_sourcecode
+}
+
+function simple_experiment() {
+:<<'DESCRIPTION'
+    Purpose of this function:
+        - with a fixed number of channels (n=4)
+          increasing the number of threads from 1-10
+DESCRIPTION
+
+    local filename=dto-test.c
+    local pattern="^#define BUF_SIZE"
+    local numchannels=10
+
+    # for numthreads in $(seq 1 10); do
+    for numthreads in $(seq 10); do
+        reset_dir
+        config_dsa $numchannels local
+
+        grep -q "$pattern" $filename # no line defining bufsize, you add one
+        if [[ $? -ne 0 ]]; then
+            sed -i '15i\#define BUF_SIZE (128*1024UL)' $filename
+        fi
+
+        grep -q "^#define MAX_THREADS" $filename # no line defining numthreads, you add one
+        if [[ $? -ne 0 ]]; then
+            sed -i '22i\#define MAX_THREADS 10' $filename
+        fi
+
+        local define_numthreads="#define MAX_THREADS $numthreads"
+        sed -i "/^#define MAX_THREADS/c\\${define_numthreads}" $filename
+
+        for size in ${DATA_SIZES[@]}; do
+            local define_bufsize="#define BUF_SIZE ($size*1024UL)"
+            sed -i "/${pattern}/c\\${define_bufsize}" $filename
+            run_wo_dto
+            run_w_dto_dyn
+            run_w_dto_st
+            # profile_dto_w_perf
+            
+            parse_and_plot simple_exp $numthreads $numchannels
+        done
+    done
 }
 
 function dto_exp_increasing_numthreads() {
