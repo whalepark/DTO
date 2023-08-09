@@ -8,11 +8,27 @@ DML_LIB_CXX=-D_GNU_SOURCE
 
 libdto: dto.c
 	# gcc -shared -fPIC -Wl,-soname,libdto.so dto.c $(DML_LIB_CXX) -DDTO_STATS_SUPPORT -o libdto.so.1.0 -laccel-config -ldl
-	gcc -shared -fPIC -Wl,-soname,libdto.so dto.c $(DML_LIB_CXX)  -L/usr/lib64 -Wl,--rpath=/usr/lib64 -DDTO_STATS_SUPPORT -o libdto.so.1.0 -laccel-config -ldl
+	# gcc -shared -fPIC -Wl,-soname,libdto.so dto.c $(DML_LIB_CXX) \
+	# 	-L/usr/lib64 \
+	# 	-Wl,--rpath=/usr/lib64 \
+	# 	-DDTO_STATS_SUPPORT -o libdto.so.1.0 -laccel-config -ldl
+	gcc -shared -fPIC -Wl,-soname,libdto.so dto.c $(DML_LIB_CXX) \
+		-L/usr/lib64 -L$(HOME)/glibc-2.37/install/lib \
+		-Wl,--rpath=$(HOME)/glibc-2.37/install/lib:/usr/lib64 \
+		-Wl,--dynamic-linker=$(HOME)/glibc-2.37/install/lib/ld-linux-x86-64.so.2 \
+		-DDTO_STATS_SUPPORT -o libdto.so.1.0 -laccel-config -ldl
 
 libdto_nostats: dto.c
-	# gcc -shared -fPIC -Wl,-soname,libdto.so dto.c $(DML_LIB_CXX) -o libdto.so.1.0 -laccel-config -ldl
-	gcc -shared -fPIC -Wl,-soname,libdto.so dto.c $(DML_LIB_CXX)  -L/usr/lib64 -Wl,--rpath=/usr/lib64 -o libdto.so.1.0 -laccel-config -ldl
+	# gcc -shared -fPIC -Wl,-soname,libdto.so dto.c $(DML_LIB_CXX) \-o libdto.so.1.0 -laccel-config -ldl
+	# gcc -shared -fPIC -Wl,-soname,libdto.so dto.c $(DML_LIB_CXX) \
+	# 	-L/usr/lib64 \
+	# 	-Wl,--rpath=/usr/lib64 \
+	# 	-o libdto.so.1.0 -laccel-config -ldl
+	gcc -shared -fPIC -Wl,-soname,libdto.so dto.c $(DML_LIB_CXX) \
+		-L/usr/lib64 -L$(HOME)/glibc-2.37/install/lib \
+		-Wl,--rpath=$(HOME)/glibc-2.37/install/lib:/usr/lib64 \
+		-Wl,--dynamic-linker=$(HOME)/glibc-2.37/install/lib/ld-linux-x86-64.so.2 \
+		-o libdto.so.1.0 -laccel-config -ldl
 
 install:
 	cp libdto.so.1.0 /usr/lib64/
